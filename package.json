@@ -1,0 +1,35 @@
+{
+  "name": "a100-stamford-text-bot",
+  "version": "0.0.1",
+  "description": "A text bot to receive incoming inquiries about A100",
+  "contributors": [
+    {
+      "name": "Eric Bauerfeld",
+      "email": "eric.bauerfeld@gmail.com"
+    },
+    {
+      "name": "James R. Zygmont",
+      "email": "j.r.zygmont@gmail.com"
+    }
+  ],
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Didericis/A100-stamford-text-bot"
+  },
+  "bugs": {
+    "url": "https://github.com/Didericis/A100-stamford-text-bot/issues"
+  },
+  "keywords": [
+    "a100",
+    "twilio",
+    "text",
+    "bot"
+  ],
+  "private": true,
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^1.5.0",
+    "twilio": "^2.4.0"
+  }
+}
