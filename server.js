@@ -100,6 +100,10 @@ var SampleApp = function() {
             res.send("<html><body><img src='" + link + "'></body></html>");
         };
 
+        self.routes['/twilio'] = function(req, res) {
+            res.send("<html><body><p>woooot</p></body></html>");
+        };
+
         self.routes['/'] = function(req, res) {
             res.setHeader('Content-Type', 'text/html');
             res.send(self.cache_get('index.html') );
