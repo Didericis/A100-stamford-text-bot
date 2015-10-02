@@ -101,8 +101,12 @@ var SampleApp = function() {
         };
 
         self.routes['/twilio'] = function(req, res) {
-            res.send("<html><body><p>woooot</p></body></html>");
-        };
+            if (twilio.validateExpressRequest(req, config.authToken)) {
+                res.writeHead(200, {'Content-Type': 'text/plain'});
+                    res.send("sweet!");
+                };
+            }
+        }
 
         self.routes['/'] = function(req, res) {
             res.setHeader('Content-Type', 'text/html');
