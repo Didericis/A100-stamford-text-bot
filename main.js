@@ -12,9 +12,7 @@ http.createServer(function(req, res) {
         var to = req.param('To');
         var from = req.param('From');
         console.log(body);
-
         // forwardSms(body);
-
         res.end();
     }
     else {
@@ -22,3 +20,11 @@ http.createServer(function(req, res) {
         res.end();
     }
 }).listen(3555);
+
+//routes['/twilio'] = function(req, res) {
+//    if (twilio.validateExpressRequest(req, config.authToken)) {
+//        res.writeHead(200, {'Content-Type': 'text/plain'});
+//            res.send("sweet!");
+//        };
+//    }
+//}
