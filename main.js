@@ -21,6 +21,11 @@ http.createServer(function(req, res) {
     }
 }).listen(3555);
 
+http.createServer(function(req, res) {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end('<html><body>HI</body></html>');
+}).listen(80);
+
 //routes['/twilio'] = function(req, res) {
 //    if (twilio.validateExpressRequest(req, config.authToken)) {
 //        res.writeHead(200, {'Content-Type': 'text/plain'});
