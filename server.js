@@ -2,11 +2,10 @@ var twilio = require('twilio');
 var nodemailer = require('nodemailer');
 
 var http = require('http');
-var config = require('./config.json');
-var exec = require('child_process').exec;
+var twilioToken = process.env.TWILIO_TOKEN;
 
 http.createServer(function(req, res) {
-    if (twilio.validateExpressRequest(req, config.authToken, {url: config.webhook})) {
+    if (twilio.validateExpressRequest(req, twilioToken, {url: config.webhook})) {
         res.writeHead(200, {'Content-Type': 'text/xml'});
         var body = req.param('Body').trim();
         var to = req.param('To');
