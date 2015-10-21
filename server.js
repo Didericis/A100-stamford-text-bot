@@ -1,11 +1,15 @@
 var twilio = require('twilio');
 var nodemailer = require('nodemailer');
-var qs= require('querystring');
+var qs = require('querystring');
 var http = require('http');
+var fs = require('fs');
+var path = require('path');
+var EventEmitter = require('events');
+var SSE = require('sse');
 
 var twilioToken = process.env.TWILIO_TOKEN;
 
-http.createServer(function(req, res) {
+var server = http.createServer(function(req, res) {
     if (req.method == 'POST') {
         var body = '';
 
@@ -16,35 +20,75 @@ http.createServer(function(req, res) {
         req.on('end', function() {
             var postData = qs.parse(body);
 
-            if (twilio.validateRequest(twilioToken, req.headers['x-twilio-signature'], 'http://67.83.190.74:3555/', postData)){
+            if (twilio.validateRequest(twilioToken, req.headers['x-twilio-signature'], 'http://localhost/', postData)){
                 var message = postData.Body.trim();
                 var to = postData.To;
                 var from = postData.From
+
                 res.writeHead(200, {'Content-Type': 'text/plain'});
                 res.write('Working');
                 
                 console.log('New text from ' + from);
                 console.log('"' + message + '"');
-                // forwardSms(body);
+
                 res.end();
             } else {
                 console.log('INVALID REQUEST');
-                res.writeHead(403, 'Forbidden', {'Content-Type': 'text/html'});
-                res.end();
+                sendResponse(res, '403', 'text/plain', 403);
             }
         });
+    } else if (req.method == 'GET') {
+        var filePath;
+
+        if (req.url == '/') {
+            filePath = '/index.html';
+        } else {
+            filePath = req.url;
+        }
+
+        sendFile(res, filePath);
     }
-}).listen(3555);
+});
 
-//http.createServer(function(req, res) {
-//    res.writeHead(200, {'Content-Type': 'text/html'});
-//    res.end('<html><body>HI</body></html>');
-//}).listen(80);
+server.listen(3555, function(){
+    var sse = new SSE(server);
 
-//routes['/twilio'] = function(req, res) {
-//    if (twilio.validateExpressRequest(req, config.authToken)) {
-//        res.writeHead(200, {'Content-Type': 'text/plain'});
-//            res.send("sweet!");
-//        };
-//    }
-//}
+    sse.on('connection', function(client) {
+        client.send('hi there!');
+    });
+});
+
+function sendFile(res, filePath, code){
+    fs.readFile('.' + filePath, function(err, file){
+        if (err && err.code == 'ENOENT') {
+            if (code == 500) {
+                sendResponse(res, '500', 'text/plain', 500);
+            } else if (code == 404) {
+                sendResponse(res, '404', 'text/plain', 404);
+            } else { 
+                sendFile(res, '/404.html', 404);
+            }
+        } else if (err) {
+            sendFile(res, '/500.html', 500);
+        } else if (code) {
+            sendFile(res, filePath, code);
+        } else if (path.extname(filePath) == '.html') {
+            sendResponse(res, file, 'text/html', 200);
+        } else if (path.extname(filePath) == '.css') {
+            sendResponse(res, file, 'text/css', 200);
+        } else if (path.extname(filePath) == '.js') {
+            sendResponse(res, file, 'application/javascript', 200);
+        } else if (path.extname(filePath) == '.png') {
+            sendResponse(res, file, 'image/png', 200);
+        } else if (path.extname(filePath) == '.ico') {
+            sendResponse(res, file, 'image/x-icon', 200);
+        } else {
+            sendResponse(res, 'Unsupported file type', 'text/plain', 415); 
+        }
+    }); 
+}
+
+function sendResponse(res, file, fileType, code){
+    res.writeHead(code, {'Content-Type': fileType});
+    res.end(file);
+}
