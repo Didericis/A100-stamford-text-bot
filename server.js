@@ -51,7 +51,7 @@ var server = http.createServer(function(req, res) {
     }
 });
 
-server.listen(3555, function(){
+server.listen(process.env.PORT, function(){
     var sse = new SSE(server);
     sse.on('connection', function(client){
         eventEmitter.on('wave', function(){
