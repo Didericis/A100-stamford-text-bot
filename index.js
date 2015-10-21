@@ -5,20 +5,15 @@ var animationEvent = whichAnimationEvent(robot);
 var es = new EventSource("/sse");
 
 es.onmessage = function (event) {
-  console.log(event.data);
-};
-
-robot.onclick = function(){
     if (!currentlyWaving) {
         robot.className += ' message';
         currentlyWaving = true;
-    }            
-}
+    }
+};
 
 animationEvent && leftArm.addEventListener(animationEvent, function() {
     robot.className = 'robot';
     currentlyWaving = false;
-    console.log('Stop waving');
 });
 
 function whichAnimationEvent(el){

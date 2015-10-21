@@ -4,7 +4,8 @@ var qs = require('querystring');
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
-var EventEmitter = require('events');
+var events = require('events');
+var eventEmitter = new events.EventEmitter();
 var SSE = require('sse');
 
 var twilioToken = process.env.TWILIO_TOKEN;
@@ -27,7 +28,7 @@ var server = http.createServer(function(req, res) {
 
                 res.writeHead(200, {'Content-Type': 'text/plain'});
                 res.write('Working');
-                
+                eventEmitter.emit('wave');
                 console.log('New text from ' + from);
                 console.log('"' + message + '"');
 
@@ -52,9 +53,10 @@ var server = http.createServer(function(req, res) {
 
 server.listen(3555, function(){
     var sse = new SSE(server);
-
-    sse.on('connection', function(client) {
-        client.send('hi there!');
+    sse.on('connection', function(client){
+        eventEmitter.on('wave', function(){
+            client.send('wave');
+        });
     });
 });
 
