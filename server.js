@@ -84,6 +84,8 @@ function sendFile(res, filePath, code){
             sendResponse(res, file, 'image/png', 200);
         } else if (path.extname(filePath) == '.ico') {
             sendResponse(res, file, 'image/x-icon', 200);
+        } else if (path.extname(filePath) == '.mp3') {
+            sendResponse(res, file, 'audio/mpeg', 200);
         } else {
             sendResponse(res, 'Unsupported file type', 'text/plain', 415); 
         }
