@@ -21,7 +21,7 @@ var server = http.createServer(function(req, res) {
         req.on('end', function() {
             var postData = qs.parse(body);
 
-            if (twilio.validateRequest(twilioToken, req.headers['x-twilio-signature'], 'http://localhost/', postData)){
+            if (twilio.validateRequest(twilioToken, req.headers['x-twilio-signature'], 'https://a100-stamford-text-bot.herokuapp.com/', postData)){
                 var message = postData.Body.trim();
                 var to = postData.To;
                 var from = postData.From
