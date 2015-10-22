@@ -9,6 +9,17 @@ var eventEmitter = new events.EventEmitter();
 var SSE = require('sse');
 
 var twilioToken = process.env.TWILIO_TOKEN;
+var emailUser = process.env.EMAIL_USER;
+var emailPass = process.env.EMAIL_PASS;
+var emailAdmin = process.env.EMAIL_ADMIN;
+
+var transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: emailUser,
+        pass: emailPass
+    }
+});
 
 var server = http.createServer(function(req, res) {
     if (req.method == 'POST') {
@@ -29,6 +40,7 @@ var server = http.createServer(function(req, res) {
                 res.writeHead(200, {'Content-Type': 'text/plain'});
                 res.write('Hi there! Message received.');
                 eventEmitter.emit('wave');
+                forwardMessage(message);
                 console.log('New text from ' + from);
                 console.log('"' + message + '"');
 
@@ -59,6 +71,22 @@ server.listen(process.env.PORT, function(){
         });
     });
 });
+
+function forwardMessage(message){
+    var mailOptions = {
+        from: 'Text Bot',
+        to: EMAIL_ADMIN,
+        subject: 'New Message',
+        text: message
+    };
+    transporter.sendMail(mailOptions, function(err, info){
+        if (err) {
+            console.log(err);
+        } else {
+            console.log(info.response);
+        }
+    });
+}
 
 function sendFile(res, filePath, code){
     fs.readFile('.' + filePath, function(err, file){
