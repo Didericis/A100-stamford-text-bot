@@ -75,7 +75,7 @@ server.listen(process.env.PORT, function(){
 function forwardMessage(message){
     var mailOptions = {
         from: 'Text Bot',
-        to: EMAIL_ADMIN,
+        to: emailAdmin,
         subject: 'New Message',
         text: message
     };
