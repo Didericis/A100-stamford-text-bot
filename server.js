@@ -27,7 +27,7 @@ var server = http.createServer(function(req, res) {
                 var from = postData.From
 
                 res.writeHead(200, {'Content-Type': 'text/plain'});
-                res.write('Working');
+                res.write('Hi there! Message received.');
                 eventEmitter.emit('wave');
                 console.log('New text from ' + from);
                 console.log('"' + message + '"');
