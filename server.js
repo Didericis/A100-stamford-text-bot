@@ -11,6 +11,8 @@ var TWILIO_TOKEN = process.env.TWILIO_TOKEN;
 var EMAIL_ADMIN = process.env.EMAIL_ADMIN;
 var EMAIL_USER = process.env.EMAIL_USER;
 var EMAIL_PASS = process.env.EMAIL_PASS;
+var FOLDER_CLIENT = 'client';
+var FOLDER_IMG = 'img';
 
 var eventEmitter = new events.EventEmitter();
 var transporter = nodemailer.createTransport({
@@ -41,12 +43,18 @@ function interpretGet(req, res){
     var filePath;
 
     if (req.url == '/') {
-        filePath = '/index.html';
+        filePath = path.join(FOLDER_CLIENT, 'index.html');
+    } else if (isFavicon(req.url)) {
+        filePath = path.join(FOLDER_CLIENT, FOLDER_IMG, path.basename(req.url));
     } else {
-        filePath = req.url;
+        filePath = path.join(FOLDER_CLIENT, req.url);
     }
 
     sendFile(res, filePath);
+}
+
+function isFavicon(url){
+    return path.basename(url).indexOf('favicon') == 0;
 }
 
 function interpretPost(req, res){
@@ -99,7 +107,7 @@ function forwardMessage(message){
 }
 
 function sendFile(res, filePath, code){
-    fs.readFile('.' + filePath, function(err, file){
+    fs.readFile(filePath, function(err, file){
         if (err && err.code == 'ENOENT') {
             if (code == 500) {
                 sendResponse(res, '500', 'text/plain', 500);
