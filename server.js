@@ -13,7 +13,13 @@ var EMAIL_USER = process.env.EMAIL_USER;
 var EMAIL_PASS = process.env.EMAIL_PASS;
 var FOLDER_CLIENT = 'client';
 var FOLDER_IMG = 'img';
+var FILE_NICKNAME = './nicknames.json';
+var COMMAND = {
+    NICKNAME : 'nickname'
+}
 
+var nicknameLock = false;
+var nicknames = require(FILE_NICKNAME);
 var eventEmitter = new events.EventEmitter();
 var transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -29,6 +35,7 @@ var server = http.createServer(function(req, res) {
         interpretGet(req, res);
     }
 });
+var userConversationState = {};
 
 server.listen(process.env.PORT, function(){
     var sse = new SSE(server);
@@ -53,10 +60,6 @@ function interpretGet(req, res){
     sendFile(res, filePath);
 }
 
-function isFavicon(url){
-    return path.basename(url).indexOf('favicon') == 0;
-}
-
 function interpretPost(req, res){
     var body = '';
 
@@ -71,39 +74,50 @@ function interpretPost(req, res){
 }
 
 function respondToPost(postData, req, res){
-    if (twilio.validateRequest(TWILIO_TOKEN, req.headers['x-twilio-signature'], 'https://a100-stamford-text-bot.herokuapp.com/', postData)){
-        var message = postData.Body.trim();
-        var to = postData.To;
-        var from = postData.From
-
-        res.writeHead(200, {'Content-Type': 'text/plain'});
-        res.write('Hi there! Message received.');
-        eventEmitter.emit('wave');
-        forwardMessage(message);
-        console.log('New text from ' + from);
-        console.log('"' + message + '"');
-
-        res.end();
+    if (postData && isTwilio(req, postData)){
+        var message = {         //Strips out unnecessary post data
+            body: postData.Body || '',
+            to: postData.To || '',
+            from: postData.From || ''
+        }
+        respondToMessage(message, res);
     } else {
         console.log('INVALID REQUEST');
         sendResponse(res, '403', 'text/plain', 403);
     }    
 }
 
-function forwardMessage(message){
+function respondToMessage(message, res){
+    var command = message.body.split(' ')[0].toLowerCase();
+    var param = message.body.split(' ')[1];
+
+    switch(command){
+        case COMMAND.NICKNAME:
+            setNickname(message.from, param, res);
+        default:
+            forwardMessage(message, res);
+    }
+}
+
+function forwardMessage(message, res){
+    var senderNickname = nicknames[message.from];
     var mailOptions = {
-        from: 'Text Bot',
+        from: senderNickname || message.from,
         to: EMAIL_ADMIN,
         subject: 'New Message',
-        text: message
+        text: message.body
     };
-    transporter.sendMail(mailOptions, function(err, info){
-        if (err) {
+    // transporter.sendMail(mailOptions, function(err, info){
+        if (false) {
             console.log(err);
+        } else if (senderNickname){
+            eventEmitter.emit('wave', res);
+            sendTextResponse('Hey ' + senderNickname + '! Message received.', res);
         } else {
-            console.log(info.response);
+            eventEmitter.emit('wave', res);
+            sendTextResponse('Message received.', res);
         }
-    });
+    // });
 }
 
 function sendFile(res, filePath, code){
@@ -136,6 +150,31 @@ function sendFile(res, filePath, code){
             sendResponse(res, 'Unsupported file type', 'text/plain', 415); 
         }
     }); 
+}
+
+function setNickname(number, nickname, res){
+    nicknames[number] = nickname;
+    if (!nicknameLock) {
+        nicknameLock = true;
+        fs.writeFile(FILE_NICKNAME, JSON.stringify(nicknames), function(err){
+            nicknameLock = false;
+            if (err) console.log(err);
+        });
+    }
+    sendTextResponse('You will now be reffered to as "' + nickname + '"', res);
+}
+
+function sendTextResponse(message, res){
+    sendResponse(res, message, 'text/plain', 200); 
+}
+
+function isFavicon(url){
+    return path.basename(url).indexOf('favicon') == 0;
+}
+
+function isTwilio(req, postData){
+    return true;
+    return twilio.validateRequest(TWILIO_TOKEN, req.headers['x-twilio-signature'], 'https://a100-stamford-text-bot.herokuapp.com/', postData);
 }
 
 function sendResponse(res, file, fileType, code){
