@@ -19,7 +19,7 @@ var COMMAND = {
 }
 
 var nicknameLock = false;
-var nicknames = require(FILE_NICKNAME);
+var nicknames = getJson(FILE_NICKNAME);
 var eventEmitter = new events.EventEmitter();
 var transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -168,6 +168,11 @@ function sendTextResponse(message, res){
     sendResponse(res, message, 'text/plain', 200); 
 }
 
+function sendResponse(res, file, fileType, code){
+    res.writeHead(code, {'Content-Type': fileType});
+    res.end(file);
+}
+
 function isFavicon(url){
     return path.basename(url).indexOf('favicon') == 0;
 }
@@ -177,7 +182,11 @@ function isTwilio(req, postData){
     return twilio.validateRequest(TWILIO_TOKEN, req.headers['x-twilio-signature'], 'https://a100-stamford-text-bot.herokuapp.com/', postData);
 }
 
-function sendResponse(res, file, fileType, code){
-    res.writeHead(code, {'Content-Type': fileType});
-    res.end(file);
+function getJson(fileName){
+    try {
+        return require(fileName);
+    } catch(e) {
+        fs.writeFileSync(fileName, '{}');
+        return {};
+    }
 }
