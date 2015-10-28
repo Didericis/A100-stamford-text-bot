@@ -6,5 +6,5 @@
 
 - [ ] Use oauth for sending emails
 - [ ] Implement ability to add people to email list
-- [ ] Allow for people to register nicknames
+- [x] Allow for people to register nicknames
 - [ ] Integrate into slack channel
