@@ -5,61 +5,26 @@ var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var events = require('events');
-var eventEmitter = new events.EventEmitter();
 var SSE = require('sse');
 
-var twilioToken = process.env.TWILIO_TOKEN;
-var emailUser = process.env.EMAIL_USER;
-var emailPass = process.env.EMAIL_PASS;
-var emailAdmin = process.env.EMAIL_ADMIN;
+var TWILIO_TOKEN = process.env.TWILIO_TOKEN;
+var EMAIL_ADMIN = process.env.EMAIL_ADMIN;
+var EMAIL_USER = process.env.EMAIL_USER;
+var EMAIL_PASS = process.env.EMAIL_PASS;
 
+var eventEmitter = new events.EventEmitter();
 var transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
-        user: emailUser,
-        pass: emailPass
+        user: EMAIL_USER,
+        pass: EMAIL_PASS
     }
 });
-
 var server = http.createServer(function(req, res) {
     if (req.method == 'POST') {
-        var body = '';
-
-        req.on('data', function (data) {
-            body += data;
-        });
-
-        req.on('end', function() {
-            var postData = qs.parse(body);
-
-            if (twilio.validateRequest(twilioToken, req.headers['x-twilio-signature'], 'https://a100-stamford-text-bot.herokuapp.com/', postData)){
-                var message = postData.Body.trim();
-                var to = postData.To;
-                var from = postData.From
-
-                res.writeHead(200, {'Content-Type': 'text/plain'});
-                res.write('Hi there! Message received.');
-                eventEmitter.emit('wave');
-                forwardMessage(message);
-                console.log('New text from ' + from);
-                console.log('"' + message + '"');
-
-                res.end();
-            } else {
-                console.log('INVALID REQUEST');
-                sendResponse(res, '403', 'text/plain', 403);
-            }
-        });
+        interpretPost(req, res);
     } else if (req.method == 'GET') {
-        var filePath;
-
-        if (req.url == '/') {
-            filePath = '/index.html';
-        } else {
-            filePath = req.url;
-        }
-
-        sendFile(res, filePath);
+        interpretGet(req, res);
     }
 });
 
@@ -72,10 +37,55 @@ server.listen(process.env.PORT, function(){
     });
 });
 
+function interpretGet(req, res){
+    var filePath;
+
+    if (req.url == '/') {
+        filePath = '/index.html';
+    } else {
+        filePath = req.url;
+    }
+
+    sendFile(res, filePath);
+}
+
+function interpretPost(req, res){
+    var body = '';
+
+    req.on('data', function (data) {
+        body += data;
+    });
+
+    req.on('end', function() {
+        var postData = qs.parse(body);
+        respondToPost(postData, req, res);
+    });    
+}
+
+function respondToPost(postData, req, res){
+    if (twilio.validateRequest(TWILIO_TOKEN, req.headers['x-twilio-signature'], 'https://a100-stamford-text-bot.herokuapp.com/', postData)){
+        var message = postData.Body.trim();
+        var to = postData.To;
+        var from = postData.From
+
+        res.writeHead(200, {'Content-Type': 'text/plain'});
+        res.write('Hi there! Message received.');
+        eventEmitter.emit('wave');
+        forwardMessage(message);
+        console.log('New text from ' + from);
+        console.log('"' + message + '"');
+
+        res.end();
+    } else {
+        console.log('INVALID REQUEST');
+        sendResponse(res, '403', 'text/plain', 403);
+    }    
+}
+
 function forwardMessage(message){
     var mailOptions = {
         from: 'Text Bot',
-        to: emailAdmin,
+        to: EMAIL_ADMIN,
         subject: 'New Message',
         text: message
     };
